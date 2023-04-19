@@ -157,13 +157,13 @@ int gelb=19;
 int blau=242;
 
 
-int rotc1=20;
-int gelbc1=19;
-int blauc1=150;
+int rotc1=50;
+int gelbc1=60;
+int blauc1=230;
 
-int rotc2=12;
-int gelbc2=15;
-int blauc2=170;
+int rotc2=20;
+int gelbc2=5;
+int blauc2=200;
 
 int mistakerot = 180;
 int mistakegelb = 30;
@@ -187,6 +187,12 @@ int endminute, endsekunde;
 
 int ingame = 0;
 
+int zahler = 0;
+int displayon = 1;
+int displayoff = 0;
+
+long timebetween=0;
+
 
 void endgame(){
   lcd.clear();
@@ -203,6 +209,7 @@ void endgame(){
   lcd.print(endsekunde);
   gamehasended = 1;
   delay(10000);
+  displayon=1;
 }
 
 
@@ -254,13 +261,16 @@ long timercount(){
     }
   }
 long mistake(){
-   if(digitalRead(Mid)==HIGH or BTSerial.read()==1 && releasemistake==true){ 
+   if(digitalRead(Mid)==HIGH && releasemistake==true && timebetween>=410){ 
     newmistake = true;
     mistakes+=1;
     releasemistake = false;
+    timebetween=0;
    }
-   if(digitalRead(Mid)==LOW or BTSerial.read()==2){
+   if(digitalRead(Mid)==LOW){
     releasemistake = true;
+    int zeit = (420/timefac);
+    timebetween+=zeit;
    }
 }
 
@@ -285,7 +295,7 @@ long ledeffect(){
         gelb=mistakegelb;
         blau=mistakeblau;
         newmistake=false;
-        timefac=2;
+        timefac=3;
       }
       if (currentrot==mistakerot && currentgelb==mistakegelb && currentblau==mistakeblau){
         mistakecolour = false;        
@@ -332,15 +342,58 @@ long ledeffect(){
       if(currentrot==rotc2 && currentgelb==gelbc2 && currentblau==blauc2) {
         changebright = false;
         mistakecolour = false;
-        timefac=50;
+        timefac=70;
       }
       else {
        if(currentrot==rotc1 && currentgelb==gelbc1 && currentblau==blauc1) {
           changebright = true;
-          timefac=50;
+          timefac=70;
         }
       }
     }
+}
+
+
+void lookforhigh(){
+  int Startval = digitalRead(Start);
+  int Midval = digitalRead(Mid);
+  int Endval = digitalRead(End);
+  
+  if(Startval==HIGH){
+    ingame = 1;
+    gamestart();
+  }
+  if(Midval==HIGH){
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Hier kann nicht");
+    lcd.setCursor(0, 1);
+    lcd.print("gestartet werden");
+    delay(1500);
+    lcd.clear();
+    int displayon = 1;
+  }
+
+  if(Endval==HIGH){
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Hier kann nicht");
+    lcd.setCursor(0, 1);
+    lcd.print("gestartet werden");
+    delay(1500);
+    lcd.clear();
+    int displayon = 1;
+  }
+}
+
+void bereit(){
+  if(displayon==1){
+    lcd.clear();
+    delay(50);
+    lcd.setCursor(5, 0);
+    lcd.print("Bereit");
+    displayon=0;
+  }
 }
 
 void setup(){
@@ -407,45 +460,17 @@ void setup(){
 }
 
 void loop(){
-  if(gamehasended=1){
+  if(gamehasended==1){
     for(i=0;i<NUMPIXELS;i++){
     pixels.setPixelColor(i, pixels.Color(255,50,0)); // Moderately bright green color.
     pixels.show(); // This sends the updated pixel color to the hardware.
     }
     gamehasended=0;
+    delay(20);
   }
-  
-  lcd.clear();
-  delay(50);
-  lcd.setCursor(5, 0);
-  lcd.print("Bereit");
-  delay(500);
-  
-  int Startval = digitalRead(Start);
-  int Midval = digitalRead(Mid);
-  int Endval = digitalRead(End);
-  
-  if(Startval==HIGH or BTSerial.read()==1){
-    ingame = 1;
-    gamestart();
-  }
-  if(Midval==HIGH){
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Hier kann nicht");
-    lcd.setCursor(0, 1);
-    lcd.print("gestartet werden");
-    delay(1500);
-  }
-
-  if(Endval==HIGH){
-    lcd.clear();
-    lcd.setCursor(0, 0);
-    lcd.print("Hier kann nicht");
-    lcd.setCursor(0, 1);
-    lcd.print("gestartet werden");
-    delay(1500);
-  }
-  lcd.clear();
-  delay(150);
+    bereit();
+    lookforhigh();
+    //long nextMinWakeUp = (nexttimecount < nextchangeleds) ? nexttimecount : nextchangeleds;
+    //int delaytime = (nextMinWakeUp-currentTime);
+    delay(20);
 }
