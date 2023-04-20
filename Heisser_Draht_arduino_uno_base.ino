@@ -3,25 +3,28 @@
   Complete project details at https://randomnerdtutorials.com  
 *********/
 
-#include <LiquidCrystal_I2C.h>
-#include <Adafruit_NeoPixel.h>
-#include <SoftwareSerial.h>
+#include <LiquidCrystal_I2C.h>  //Bibliothek für Display wird eingebunden
+#include <Adafruit_NeoPixel.h>  //Bibliothek für LED Streifen wird eingebunden
+#include <SoftwareSerial.h>     //Bibliothek für Software Serial wird eingebunden, damit über alle Pins eine serielle Verbindung hergestellt werden kann
 
-SoftwareSerial BTSerial(9, 10);   // RX | TX
+SoftwareSerial BTSerial(9, 10);   // RX | TX  PINs werden als RX und TX konfiguriert
 
-int LEDpin = 7;
-int NUMPIXELS = 11;
-Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, LEDpin, NEO_GRB + NEO_KHZ800);
+int LEDpin = 7; //Pin wird für Kommunkikation mit LED Streifen festgelegt
+int NUMPIXELS = 11; //Anzahl LEDs auf Streifen wird festgelegt
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, LEDpin, NEO_GRB + NEO_KHZ800);  //LED Streifen wirdin pixels konfiguriert
 
-// set the LCD number of columns and rows
-int lcdColumns = 16;
-int lcdRows = 2;
-int i;
+// LCD Konfiguration
+int lcdColumns = 16;  //Anzahl der Stelle
+int lcdRows = 2;      //Anzahl der Zeilen
 
-// set LCD address, number of columns and rows
+// set LCD address
 // if you don't know your display address, run an I2C scanner sketch
-LiquidCrystal_I2C lcd(0x3F, lcdColumns, lcdRows);  
+// Display Adresse = 0x3F
+LiquidCrystal_I2C lcd(0x3F, lcdColumns, lcdRows);
 
+int i;   //i für Hochzählen
+
+//ifm Logo als Byte Code
 byte ibottom[8] = {
   0b10001,
   0b10001,
@@ -132,68 +135,68 @@ byte mrtop[8] = {
   0b11110
 };
 
-int Start = 11;
-int Mid = 12;
-int End = 13;
-int Motor = 2;
 
-int SRV_pos;
-boolean SRV_moveFoward;
-long SRV_nextWakeUp;
+int Start = 11;   //Pin, an dem der Startpin(draht) angeschlossen ist
+int Mid = 12;     //Pin, an dem der Mittepin(draht) angeschlossen ist
+int End = 13;     //Pin, an dem der Endpin(draht) angeschlossen ist
+int Motor = 2;    //Pin, an dem der Motor angeschlossen ist
 
-int timervalue;
-boolean timer_change = true;
+boolean timer_change = true;    //legt fest, ob der Timer geändert wir, oder nicht
 
 //LED
-int mistakes = 0;
-boolean newmistake = false;
-boolean ledeffectchange = true;
-int currentrot;
-int currentgelb;
-int currentblau;
-
-int rot=31;
-int gelb=19;
-int blau=242;
+int mistakes = 0;   //Anzahl der gemachten Fehler
+boolean newmistake = false;   //legt fest, ob ein neuer Fehler gemacht wurde
+boolean ledeffectchange = true;   //legt fest, ob LEDs geändert werden, oder nicht
+int currentrot;   //jetziger rot Wert
+int currentgelb;  //jetziger gelb Wert
+int currentblau;  //jetziger blau Wert
 
 
-int rotc1=50;
-int gelbc1=60;
-int blauc1=230;
+int rot;  //gewünschter rot Wert
+int gelb; //gewünschter gelb Wert
+int blau; //gewünschter blau Wert
 
-int rotc2=20;
-int gelbc2=5;
-int blauc2=200;
+//int rot=31;
+//int gelb=19;
+//int blau=242;
 
-int mistakerot = 180;
-int mistakegelb = 30;
-int mistakeblau = 20;
 
-boolean mistakecolour = false;
+int rotc1=50;   //rot Wert für ersten Stand des Pulsierens
+int gelbc1=60;  //gelb Wert für ersten Stand des Pulsierens
+int blauc1=230; //blau Wert für ersten Stand des Pulsierens
 
-boolean releasemistake = true;
+int rotc2=20;   //rot Wert für zweite Stand des Pulsierens
+int gelbc2=5;   //gelb Wert für zweite Stand des Pulsierens
+int blauc2=200; //blau Wert für zweite Stand des Pulsierens
 
-long startmillis;
-long millisnow;
+int mistakerot = 180; //rot Wert wenn ein Fehler gemacht wurde
+int mistakegelb = 30; //gelb Wert wenn ein Fehler gemacht wurde
+int mistakeblau = 20; //blau Wert wenn ein Fehler gemacht wurde
 
-int gamehasended = 0;
+boolean mistakecolour = false;  //legt fest, ob die Fehlerfarbe angezeigt werden soll
 
-int timefac = 20;
-long currentTime;
-boolean changebright =false;
-int minute, sekunde;
+boolean releasemistake = true;  //legt fest, ob nach einem Fehler der Draht nicht mehr berührt wird
+
+long startmillis;   //Zeit mit der gestartet wurde
+long millisnow;     //Zeit, die seit Spielstrt abgelaufen ist
+
+int gamehasended = 0;   //Legtt fest, ob das Spiel beendet ist
+
+int timefac = 20;   //Pause zwischen den einzelnen Aufrufen, bei game
+boolean changebright =false;  //legt fest, ob das Pulsieren anfangen soll
+int minute, sekunde;  
 int currentseconds;
-int endminute, endsekunde;
+int endminute, endsekunde;    //Zeit, mit der das Spiel beendet wurde
 
 int ingame = 0;
 
-int zahler = 0;
+//soll bereit getriggert werden
 int displayon = 1;
 int displayoff = 0;
 
 long timebetween=0;
 
-
+//wenn Spiel beendet wurde
 void endgame(){
   lcd.clear();
   delay(50);
@@ -201,7 +204,7 @@ void endgame(){
   lcd.print("Fehler: ");
   lcd.print(mistakes);
   lcd.setCursor(3,0);
-  lcd.print("Zeit: ");
+  lcd.print("Zeit: ");    //benötigte Zeit wird angezeigt
   if (endminute<10) lcd.print("0");
   lcd.print(endminute);
   lcd.print(":");
@@ -287,6 +290,7 @@ long endfunction(){
     }
 }
 
+//pulsieren der LED
 long ledeffect(){
     if(ledeffectchange) {
       if (newmistake==true){
@@ -466,7 +470,6 @@ void loop(){
     pixels.show(); // This sends the updated pixel color to the hardware.
     }
     gamehasended=0;
-    delay(20);
   }
     bereit();
     lookforhigh();
